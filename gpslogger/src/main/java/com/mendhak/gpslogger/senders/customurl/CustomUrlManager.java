@@ -2,6 +2,7 @@ package com.mendhak.gpslogger.senders.customurl;
 
 import android.location.Location;
 import android.os.Bundle;
+import android.webkit.MimeTypeMap;
 
 import com.mendhak.gpslogger.common.BundleConstants;
 import com.mendhak.gpslogger.common.PreferenceHelper;
@@ -26,6 +27,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
 
 public class CustomUrlManager extends FileSender {
 
@@ -154,7 +159,7 @@ public class CustomUrlManager extends FileSender {
 
     public void sendByHttp(String url, String method, String body, String headers, String username, String password){
 
-        CustomUrlRequest request = new CustomUrlRequest(url, method, body, headers, username, password);
+        CustomUrlRequest request = new CustomUrlRequest(url, method, null, headers, username, password);
         String serializedRequest = Strings.serializeTojson(request);
         String tag = String.valueOf(Objects.hashCode(serializedRequest));
 
@@ -269,23 +274,28 @@ public class CustomUrlManager extends FileSender {
         String httpBody = preferenceHelper.getCustomLoggingHTTPBody();
         String httpHeaders = preferenceHelper.getCustomLoggingHTTPHeaders();
         String httpMethod = preferenceHelper.getCustomLoggingHTTPMethod();
+        MediaType mediaType = MediaType.parse(getMimeType(f.getPath()));
+        RequestBody fileBody = RequestBody.create( mediaType,f);
+        MultipartBody.Part filePart = MultipartBody.Part.createFormData("file", f.getName(), fileBody);
+        RequestBody multipartBody = new MultipartBody.Builder()
+                .setType(MultipartBody.FORM) // Must be FORM for file uploads
+                .addPart(filePart)
+                .build();
+        requests.add(new CustomUrlRequest(customLoggingUrl, httpMethod,
+                multipartBody, httpHeaders, preferenceHelper.getCustomLoggingBasicAuthUsername(),
+                preferenceHelper.getCustomLoggingBasicAuthPassword()));
 
-        for(SerializableLocation loc: locations){
-            try {
-                String finalUrl = getFormattedTextblock(customLoggingUrl, loc);
-                String finalBody = getFormattedTextblock(httpBody, loc);
-                String finalHeaders = getFormattedTextblock(httpHeaders, loc);
-
-                requests.add(new CustomUrlRequest(finalUrl, httpMethod,
-                        finalBody, finalHeaders, preferenceHelper.getCustomLoggingBasicAuthUsername(),
-                        preferenceHelper.getCustomLoggingBasicAuthPassword()));
-            } catch (Exception e) {
-                LOG.error("Could not build the Custom URL to send", e);
-            }
-        }
 
         return requests;
 
+    }
+    private String getMimeType(String filePath) {
+        String type = null;
+        String extension = MimeTypeMap.getFileExtensionFromUrl(filePath);
+        if (extension != null) {
+            type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
+        }
+        return type != null ? type : "application/octet-stream"; // Default to binary
     }
 
 }

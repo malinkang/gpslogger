@@ -68,8 +68,7 @@ public class CustomUrlWorker extends Worker {
                 }
 
                 if (!urlRequest.getHttpMethod().equalsIgnoreCase("GET")) {
-                    RequestBody body = RequestBody.create(null, urlRequest.getHttpBody());
-                    requestBuilder = requestBuilder.method(urlRequest.getHttpMethod(), body);
+                    requestBuilder = requestBuilder.method(urlRequest.getHttpMethod(), urlRequest.getHttpBody());
                 }
 
                 Request request = requestBuilder.build();

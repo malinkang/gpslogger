@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import okhttp3.RequestBody;
+
 
 public class CustomUrlRequest implements Serializable {
 
@@ -17,20 +19,20 @@ public class CustomUrlRequest implements Serializable {
     private HashMap<String, String> httpHeaders = new HashMap<String, String>();
     private String logURL;
     private String httpMethod;
-    private String httpBody;
+    private RequestBody httpBody;
     private String rawHeaders;
 
 
 
     public CustomUrlRequest(String logUrl, String httpMethod) {
-        this(logUrl, httpMethod, "", "", "","");
+        this(logUrl, httpMethod, null, "", "","");
     }
 
     public CustomUrlRequest(String logUrl)  {
         this(logUrl, "GET");
     }
 
-    public CustomUrlRequest(String logURL, String httpMethod, String httpBody, String rawHeaders, String basicAuthUsername, String basicauthPassword){
+    public CustomUrlRequest(String logURL, String httpMethod, RequestBody httpBody, String rawHeaders, String basicAuthUsername, String basicauthPassword){
         this.logURL = logURL;
         this.httpMethod = httpMethod.toUpperCase();
         this.httpBody = httpBody;
@@ -112,7 +114,7 @@ public class CustomUrlRequest implements Serializable {
         return this.httpHeaders;
     }
 
-    String getHttpBody(){
+    RequestBody getHttpBody(){
         return this.httpBody;
     }
 }
